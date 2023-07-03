@@ -1,10 +1,23 @@
 SRC_FILES := $(wildcard src/**/*.cpp)
 OBJ_FILES := $(patsubst src/%.cpp,out/%.o,$(SRC_FILES))
 
+# gcc_compiler := i686-elf-g++
+gcc_compiler := g++
+
+# gdb := i686-elf-g++
+gdb := gdb
+
+# linker := i686-elf-ld
+linker := ld
+
+qemu := qemu-system-x86_64
+
+cxx_flags := -g -ffreestanding -m32 -c -std=c++20 -static-libgcc -lgcc -Wall -Wextra -fno-exceptions -fno-rtti -I src -fno-pie
+
 ############
 #   Basic
 ############
-all: out/os_image.bin
+all: out/os_image.bin out/kernel/kernel.elf
 
 dbg:
 	@echo $(SRC_FILES)
@@ -16,7 +29,14 @@ clean:
 rebuild: clean all
 
 run: all
-	qemu-system-x86_64.exe -fda out\os_image.bin
+	${qemu} -fda out/os_image.bin
+
+run_dbg: all
+	${qemu} -s -fda out/os_image.bin
+
+debug: all
+	${qemu} -s -fda out/os_image.bin &
+	${gdb} -ex "target remote localhost:1234" -ex "symbol-file out/kernel/kernel.elf"
 
 #################
 #   Bootloader
@@ -34,10 +54,13 @@ out/kernel/kernel_entry.o: src/kernel/kernel_entry.asm
 
 ${OBJ_FILES}: out/%.o: src/%.cpp
 	mkdir -p $(dir $@)
-	i686-elf-g++ -ffreestanding -m32 -c -std=c++20 -static-libgcc -lgcc -Wall -Wextra -fno-exceptions -fno-rtti $< -o $@ -I src
+	${gcc_compiler} ${cxx_flags} $< -o $@ 
 
 out/kernel/kernel.bin: out/kernel/kernel_entry.o ${OBJ_FILES}
-	i686-elf-ld -o out/kernel/kernel.bin -Ttext 0x1000 out/kernel/kernel_entry.o ${OBJ_FILES} --oformat binary
+	${linker} -o out/kernel/kernel.bin -Ttext 0x1000 out/kernel/kernel_entry.o ${OBJ_FILES} --oformat binary -m elf_i386
+
+out/kernel/kernel.elf: out/kernel/kernel_entry.o ${OBJ_FILES}
+	${linker} -o out/kernel/kernel.elf -Ttext 0x1000 out/kernel/kernel_entry.o ${OBJ_FILES} -m elf_i386
 
 ################
 #   OS Image

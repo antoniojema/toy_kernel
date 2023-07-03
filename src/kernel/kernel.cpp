@@ -21,6 +21,10 @@ void print_fibonacci(size_t n) {
 }
 
 void main() {
+    bool cont = false;
+    while (!cont) {
+        Screen::print_string("...");
+    }
     Screen::clear_screen();
     print_fibonacci(20);
 }
