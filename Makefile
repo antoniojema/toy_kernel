@@ -52,15 +52,19 @@ out/kernel/kernel_entry.o: src/kernel/kernel_entry.asm
 	mkdir -p $(dir $@)
 	nasm -f elf src/kernel/kernel_entry.asm -o out/kernel/kernel_entry.o
 
+out/cpu/interrupts.o: src/cpu/interrupts.asm
+	mkdir -p $(dir $@)
+	nasm -f elf src/cpu/interrupts.asm -o out/cpu/interrupts.o
+
 ${OBJ_FILES}: out/%.o: src/%.cpp
 	mkdir -p $(dir $@)
 	${gcc_compiler} ${cxx_flags} $< -o $@ 
 
-out/kernel/kernel.bin: out/kernel/kernel_entry.o ${OBJ_FILES}
-	${linker} -o out/kernel/kernel.bin -Ttext 0x1000 out/kernel/kernel_entry.o ${OBJ_FILES} --oformat binary -m elf_i386
+out/kernel/kernel.bin: out/kernel/kernel_entry.o out/cpu/interrupts.o ${OBJ_FILES}
+	${linker} -o out/kernel/kernel.bin -Ttext 0x1000 out/kernel/kernel_entry.o out/cpu/interrupts.o ${OBJ_FILES} --oformat binary -m elf_i386
 
-out/kernel/kernel.elf: out/kernel/kernel_entry.o ${OBJ_FILES}
-	${linker} -o out/kernel/kernel.elf -Ttext 0x1000 out/kernel/kernel_entry.o ${OBJ_FILES} -m elf_i386
+out/kernel/kernel.elf: out/kernel/kernel_entry.o out/cpu/interrupts.o ${OBJ_FILES}
+	${linker} -o out/kernel/kernel.elf -Ttext 0x1000 out/kernel/kernel_entry.o out/cpu/interrupts.o ${OBJ_FILES} -m elf_i386
 
 ################
 #   OS Image

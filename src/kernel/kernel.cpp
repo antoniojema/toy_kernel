@@ -1,4 +1,5 @@
 #include "drivers/screen.h"
+#include "cpu/idt.h"
 
 void print_fibonacci(size_t n) {
     if (n == 0) return;
@@ -21,10 +22,19 @@ void print_fibonacci(size_t n) {
 }
 
 void main() {
-    bool cont = false;
-    while (!cont) {
-        Screen::print_string("...");
-    }
+    // bool cont = false;
+    // while (!cont) {
+    //     Screen::print_string("...");
+    // }
     Screen::clear_screen();
-    print_fibonacci(20);
+    print_fibonacci(27);
+    
+    IDT::isr_install();
+
+    print_fibonacci(5);
+    
+    __asm__ __volatile__("int $2");
+    __asm__ __volatile__("int $3");
+    
+    print_fibonacci(5);
 }

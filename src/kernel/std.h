@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stddef.h>
+
 template<typename T>
 inline void swap(T& x1, T& x2) {
     T tmp = (T&&)x1;
@@ -20,3 +22,6 @@ inline void memcpy(void* destination, void* source, size_t num) {
         *((char*)destination + i) = *((char*)source + i);
     }
 }
+
+#define low_16(address) (uint16_t)((address) & 0xFFFF)
+#define high_16(address) (uint16_t)(((address) >> 16) & 0xFFFF)

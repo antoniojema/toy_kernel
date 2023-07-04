@@ -71,7 +71,7 @@ namespace Screen {
                 clear_screen();
                 return;
             }
-            for (uint8_t n_row = 0; n_row < N_ROWS - n_rows; ++n_row) {
+            for (uint8_t n_row = 0; n_row < N_ROWS; ++n_row) {
                 uint8_t n_row_copy = n_row + n_rows;
                 if (n_row_copy >= N_ROWS) {
                     clear_row(n_row);
