@@ -2,6 +2,21 @@
 
 #include "std.h"
 
+inline void append_strings(const char* buff_1, const char* buff_2, size_t len1, size_t len2, char* buff_3) {
+    for (size_t i = 0; i < len1; ++i) {
+        buff_3[i] = buff_1[i];
+    }
+    for (size_t i = 0; i < len2; ++i) {
+        buff_3[len1 + i] = buff_2[i];
+    }
+}
+
+inline size_t strlen(const char* str) {
+    size_t len = 0;
+    while (str[len] != 0) ++len;
+    return len;
+}
+
 inline bool write_in_string(char c, size_t pos, char* str, size_t max_size) {
     if (pos >= max_size) return false;
     str[pos] = c;

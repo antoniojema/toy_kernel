@@ -1,9 +1,12 @@
 #include "idt.h"
 #include "kernel/std.h"
+#include "kernel/string.h"
 #include "drivers/screen.h"
 #include "drivers/port_io.h"
 
 #define KERNEL_CS 0x08
+
+extern "C" void idt_flush(uint32_t);
 
 extern "C" void isr0();
 extern "C" void isr1();
@@ -89,22 +92,80 @@ enum IRQ_Number {
 };
 
 #define IDT_ENTRIES 256
+#define IDT_SIZE (IDT_ENTRIES * sizeof(IDT_Entry))
 inline IDT_Entry idt[IDT_ENTRIES];
 inline IDT_Register idt_reg;
 
-void set_idt() {
-    idt_reg.base = (uint32_t) &idt;
-    idt_reg.limit = IDT_ENTRIES * sizeof(IDT_Entry) - 1;
-    
-    __asm__ __volatile__("lidtl (%0)" : : "r" (&idt_reg));
-}
-
-void set_idt_entry(int n, uint32_t handler) {
+void set_idt_entry(int n, uint32_t handler, uint16_t selector, uint8_t flags) {
     idt[n].offset_low  = low_16 (handler);
     idt[n].offset_high = high_16(handler);
-    idt[n].segment_selector = KERNEL_CS;
+    idt[n].segment_selector = selector;
     idt[n].zero = 0;
-    idt[n].flags = 0x8E;
+    idt[n].flags = flags;
+}
+
+void isr_install() {
+    set_idt_entry( 0, (uint32_t)&isr0 , 0x08, 0b10001110);
+    set_idt_entry( 1, (uint32_t)&isr1 , 0x08, 0b10001110);
+    set_idt_entry( 2, (uint32_t)&isr2 , 0x08, 0b10001110);
+    set_idt_entry( 3, (uint32_t)&isr3 , 0x08, 0b10001110);
+    set_idt_entry( 4, (uint32_t)&isr4 , 0x08, 0b10001110);
+    set_idt_entry( 5, (uint32_t)&isr5 , 0x08, 0b10001110);
+    set_idt_entry( 6, (uint32_t)&isr6 , 0x08, 0b10001110);
+    set_idt_entry( 7, (uint32_t)&isr7 , 0x08, 0b10001110);
+    set_idt_entry( 8, (uint32_t)&isr8 , 0x08, 0b10001110);
+    set_idt_entry( 9, (uint32_t)&isr9 , 0x08, 0b10001110);
+    set_idt_entry(10, (uint32_t)&isr10, 0x08, 0b10001110);
+    set_idt_entry(11, (uint32_t)&isr11, 0x08, 0b10001110);
+    set_idt_entry(12, (uint32_t)&isr12, 0x08, 0b10001110);
+    set_idt_entry(13, (uint32_t)&isr13, 0x08, 0b10001110);
+    set_idt_entry(14, (uint32_t)&isr14, 0x08, 0b10001110);
+    set_idt_entry(15, (uint32_t)&isr15, 0x08, 0b10001110);
+    set_idt_entry(16, (uint32_t)&isr16, 0x08, 0b10001110);
+    set_idt_entry(17, (uint32_t)&isr17, 0x08, 0b10001110);
+    set_idt_entry(18, (uint32_t)&isr18, 0x08, 0b10001110);
+    set_idt_entry(19, (uint32_t)&isr19, 0x08, 0b10001110);
+    set_idt_entry(20, (uint32_t)&isr20, 0x08, 0b10001110);
+    set_idt_entry(21, (uint32_t)&isr21, 0x08, 0b10001110);
+    set_idt_entry(22, (uint32_t)&isr22, 0x08, 0b10001110);
+    set_idt_entry(23, (uint32_t)&isr23, 0x08, 0b10001110);
+    set_idt_entry(24, (uint32_t)&isr24, 0x08, 0b10001110);
+    set_idt_entry(25, (uint32_t)&isr25, 0x08, 0b10001110);
+    set_idt_entry(26, (uint32_t)&isr26, 0x08, 0b10001110);
+    set_idt_entry(27, (uint32_t)&isr27, 0x08, 0b10001110);
+    set_idt_entry(28, (uint32_t)&isr28, 0x08, 0b10001110);
+    set_idt_entry(29, (uint32_t)&isr29, 0x08, 0b10001110);
+    set_idt_entry(30, (uint32_t)&isr30, 0x08, 0b10001110);
+    set_idt_entry(31, (uint32_t)&isr31, 0x08, 0b10001110);
+
+    // // Remap the PIC
+    // port_byte_out(0x20, 0x11);
+    // port_byte_out(0xA0, 0x11);
+    // port_byte_out(0x21, 0x20);
+    // port_byte_out(0xA1, 0x28);
+    // port_byte_out(0x21, 0x04);
+    // port_byte_out(0xA1, 0x02);
+    // port_byte_out(0x21, 0x01);
+    // port_byte_out(0xA1, 0x01);
+    // port_byte_out(0x21, 0x0);
+    // port_byte_out(0xA1, 0x0); 
+    
+    // set_idt_entry(IRQ0 , (uint32_t)&isr0 , 0x08, 0b10001110);
+    // set_idt_entry(IRQ1 , (uint32_t)&isr1 , 0x08, 0b10001110);
+    // set_idt_entry(IRQ2 , (uint32_t)&isr2 , 0x08, 0b10001110);
+    // set_idt_entry(IRQ3 , (uint32_t)&isr3 , 0x08, 0b10001110);
+    // set_idt_entry(IRQ4 , (uint32_t)&isr4 , 0x08, 0b10001110);
+    // set_idt_entry(IRQ5 , (uint32_t)&isr5 , 0x08, 0b10001110);
+    // set_idt_entry(IRQ6 , (uint32_t)&isr6 , 0x08, 0b10001110);
+    // set_idt_entry(IRQ7 , (uint32_t)&isr7 , 0x08, 0b10001110);
+    // set_idt_entry(IRQ8 , (uint32_t)&isr8 , 0x08, 0b10001110);
+    // set_idt_entry(IRQ9 , (uint32_t)&isr9 , 0x08, 0b10001110);
+    // set_idt_entry(IRQ10, (uint32_t)&isr10, 0x08, 0b10001110);
+    // set_idt_entry(IRQ11, (uint32_t)&isr11, 0x08, 0b10001110);
+    // set_idt_entry(IRQ12, (uint32_t)&isr12, 0x08, 0b10001110);
+    // set_idt_entry(IRQ13, (uint32_t)&isr13, 0x08, 0b10001110);
+    // set_idt_entry(IRQ14, (uint32_t)&isr14, 0x08, 0b10001110);
+    // set_idt_entry(IRQ15, (uint32_t)&isr15, 0x08, 0b10001110);
 }
 
 const char*const exception_messages[] = {
@@ -149,70 +210,14 @@ isr_t interrupt_handlers[256];
 
 } // namespace
 
-void isr_install() {
-    set_idt_entry(0, (uint32_t)&isr0);
-    set_idt_entry(1, (uint32_t)&isr1);
-    set_idt_entry(2, (uint32_t)&isr2);
-    set_idt_entry(3, (uint32_t)&isr3);
-    set_idt_entry(4, (uint32_t)&isr4);
-    set_idt_entry(5, (uint32_t)&isr5);
-    set_idt_entry(6, (uint32_t)&isr6);
-    set_idt_entry(7, (uint32_t)&isr7);
-    set_idt_entry(8, (uint32_t)&isr8);
-    set_idt_entry(9, (uint32_t)&isr9);
-    set_idt_entry(10, (uint32_t)&isr10);
-    set_idt_entry(11, (uint32_t)&isr11);
-    set_idt_entry(12, (uint32_t)&isr12);
-    set_idt_entry(13, (uint32_t)&isr13);
-    set_idt_entry(14, (uint32_t)&isr14);
-    set_idt_entry(15, (uint32_t)&isr15);
-    set_idt_entry(16, (uint32_t)&isr16);
-    set_idt_entry(17, (uint32_t)&isr17);
-    set_idt_entry(18, (uint32_t)&isr18);
-    set_idt_entry(19, (uint32_t)&isr19);
-    set_idt_entry(20, (uint32_t)&isr20);
-    set_idt_entry(21, (uint32_t)&isr21);
-    set_idt_entry(22, (uint32_t)&isr22);
-    set_idt_entry(23, (uint32_t)&isr23);
-    set_idt_entry(24, (uint32_t)&isr24);
-    set_idt_entry(25, (uint32_t)&isr25);
-    set_idt_entry(26, (uint32_t)&isr26);
-    set_idt_entry(27, (uint32_t)&isr27);
-    set_idt_entry(28, (uint32_t)&isr28);
-    set_idt_entry(29, (uint32_t)&isr29);
-    set_idt_entry(30, (uint32_t)&isr30);
-    set_idt_entry(31, (uint32_t)&isr31);
+void set_idt() {
+    idt_reg.base = (uint32_t) &idt;
+    idt_reg.limit = IDT_SIZE - 1;
 
-    // Remap the PIC
-    port_byte_out(0x20, 0x11);
-    port_byte_out(0xA0, 0x11);
-    port_byte_out(0x21, 0x20);
-    port_byte_out(0xA1, 0x28);
-    port_byte_out(0x21, 0x04);
-    port_byte_out(0xA1, 0x02);
-    port_byte_out(0x21, 0x01);
-    port_byte_out(0xA1, 0x01);
-    port_byte_out(0x21, 0x0);
-    port_byte_out(0xA1, 0x0); 
-    
-    set_idt_entry(IRQ0, (uint32_t)&isr0);
-    set_idt_entry(IRQ1, (uint32_t)&isr1);
-    set_idt_entry(IRQ2, (uint32_t)&isr2);
-    set_idt_entry(IRQ3, (uint32_t)&isr3);
-    set_idt_entry(IRQ4, (uint32_t)&isr4);
-    set_idt_entry(IRQ5, (uint32_t)&isr5);
-    set_idt_entry(IRQ6, (uint32_t)&isr6);
-    set_idt_entry(IRQ7, (uint32_t)&isr7);
-    set_idt_entry(IRQ8, (uint32_t)&isr8);
-    set_idt_entry(IRQ9, (uint32_t)&isr9);
-    set_idt_entry(IRQ10, (uint32_t)&isr10);
-    set_idt_entry(IRQ11, (uint32_t)&isr11);
-    set_idt_entry(IRQ12, (uint32_t)&isr12);
-    set_idt_entry(IRQ13, (uint32_t)&isr13);
-    set_idt_entry(IRQ14, (uint32_t)&isr14);
-    set_idt_entry(IRQ15, (uint32_t)&isr15);
+    memset(&idt, 0, IDT_SIZE);
 
-    set_idt();
+    isr_install();
+    idt_flush((uint32_t)&idt_reg);
 }
 
 void register_isr(uint8_t n, isr_t handler) {

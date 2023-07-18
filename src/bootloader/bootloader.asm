@@ -1,6 +1,7 @@
 [org 0x7c00]
 
 KERNEL_OFFSET equ 0x1000
+SECTORS_TO_LOAD equ 50
 
 [bits 16]
     ; Set stack pointer
@@ -21,7 +22,7 @@ KERNEL_OFFSET equ 0x1000
 
 load_kernel:
     ; Load 15 sectors from drive BOOT_DRIVE to 0x0:KERNEL_OFFSET
-    mov dh, 15
+    mov dh, SECTORS_TO_LOAD
     mov dl, [BOOT_DRIVE]
     mov ax, 0x0
     mov es, ax

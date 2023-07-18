@@ -11,7 +11,6 @@ namespace Screen {
         constexpr uint8_t N_COLS = 80;
         constexpr size_t MEMORY_BEGIN = 0xB8000;
         constexpr size_t MEMORY_END = 0xB8FA0;
-        constexpr uint8_t WHITE_ON_BLACK = 0x0f;
 
         constexpr size_t REG_SCREEN_CTRL = 0x3D4;
         constexpr size_t REG_SCREEN_DATA = 0x3D5;

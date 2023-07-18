@@ -13,8 +13,9 @@ namespace IDT {
     
     using isr_t = void (*)(Registers);
     
-    void isr_install();
+    void set_idt();
+    void register_isr(uint8_t n, isr_t handler);
 
-    void register_isr(uint8_t n, isr_t handler);  
+    extern "C" void call_interrupt(uint8_t n); 
 
 } // namespace IDT
