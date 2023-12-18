@@ -1,7 +1,7 @@
 [org 0x7c00]
 
 KERNEL_OFFSET equ 0x1000
-SECTORS_TO_LOAD equ 50
+SECTORS_TO_LOAD equ 100
 
 [bits 16]
     ; Set stack pointer

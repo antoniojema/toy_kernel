@@ -1,19 +1,21 @@
 SRC_FILES := $(wildcard src/**/*.cpp)
 OBJ_FILES := $(patsubst src/%.cpp,out/%.o,$(SRC_FILES))
-MAX_SECTORS := 50
+MAX_SECTORS := 100
 
-# gcc_compiler := i686-elf-g++
-gcc_compiler := g++
+# gcc := i686-elf-g++
+gcc := g++
 
-# gdb := i686-elf-g++
+nasm := nasm
+
 gdb := gdb
 
 # linker := i686-elf-ld
 linker := ld
 
-qemu := qemu-system-x86_64
+# qemu := qemu-system-x86_64
+qemu := qemu-system-i386
 
-cxx_flags := -g -ffreestanding -m32 -c -std=c++20 -static-libgcc -lgcc -Wall -Wextra -fno-exceptions -fno-rtti -I src -fno-pie
+cxx_flags := -O0 -g -fvar-tracking -ffreestanding -m32 -c -std=c++20 -static-libgcc -lgcc -Wall -Wextra -fno-exceptions -fno-rtti -I src -fno-pie
 
 ############
 #   Basic
@@ -35,10 +37,10 @@ run: all
 	${qemu} -fda out/os_image.bin
 
 run_dbg: all
-	${qemu} -s -fda out/os_image.bin
+	${qemu} -s -S -fda out/os_image.bin
 
 debug: all
-	${qemu} -s -fda out/os_image.bin &
+	${qemu} -s -S -fda out/os_image.bin &
 	${gdb} -ex "target remote localhost:1234" -ex "symbol-file out/kernel/kernel.elf"
 
 #################
@@ -46,7 +48,7 @@ debug: all
 #################
 out/bootloader/bootloader.bin: src/bootloader/bootloader.asm
 	mkdir -p $(dir $@)
-	nasm -f bin src/bootloader/bootloader.asm -o out/bootloader/bootloader.bin
+	${nasm} -f bin src/bootloader/bootloader.asm -o out/bootloader/bootloader.bin
 
 
 #############
@@ -54,15 +56,15 @@ out/bootloader/bootloader.bin: src/bootloader/bootloader.asm
 #############
 out/kernel/kernel_entry.o: src/kernel/kernel_entry.asm
 	mkdir -p $(dir $@)
-	nasm -f elf src/kernel/kernel_entry.asm -o out/kernel/kernel_entry.o
+	${nasm} -f elf src/kernel/kernel_entry.asm -o out/kernel/kernel_entry.o
 
 out/cpu/interrupts.o: src/cpu/interrupts.asm
 	mkdir -p $(dir $@)
-	nasm -f elf src/cpu/interrupts.asm -o out/cpu/interrupts.o
+	${nasm} -f elf src/cpu/interrupts.asm -o out/cpu/interrupts.o
 
 ${OBJ_FILES}: out/%.o: src/%.cpp
 	mkdir -p $(dir $@)
-	${gcc_compiler} ${cxx_flags} $< -o $@ 
+	${gcc} ${cxx_flags} $< -o $@ 
 
 out/kernel/kernel.bin: out/kernel/kernel_entry.o out/cpu/interrupts.o ${OBJ_FILES}
 	${linker} -o out/kernel/kernel.bin -Ttext 0x1000 out/kernel/kernel_entry.o out/cpu/interrupts.o ${OBJ_FILES} --oformat binary -m elf_i386

@@ -29,31 +29,70 @@ inline void invert_string(char* str, size_t size) {
     while (n1 < n2) swap(str[n1++], str[n2--]);
 }
 
-inline bool unsigned_to_string(size_t n, char* buff, size_t max_size) {
+inline size_t unsigned_to_string(size_t n, char* buff, size_t max_size) {
     size_t pos = 0;
     if (n == 0) {
-        if (!write_in_string('0', pos++, buff, max_size)) return false;
-        if (!write_in_string(0, pos, buff, max_size)) return false;
-    }
-    while (n > 0) {
-        size_t digit = n % 10;
-        n = (n-digit) / 10;
-        if (!write_in_string('0' + (char)digit, pos++, buff, max_size)) return false;
-    }
-    if (!write_in_string(0, pos, buff, max_size)) return false;
-    invert_string(buff, pos);
-    return true;
-}
-
-inline bool signed_to_string(ptrdiff_t n, char* buff, size_t max_size) {
-    if (n >= 0) {
-        return unsigned_to_string((unsigned long long int)n, buff, max_size);
+        if (!write_in_string('0', pos++, buff, max_size)) return 0;
     }
     else {
-        if (!unsigned_to_string((unsigned long long int)(-n), buff+1, max_size-1)) {
-            return false;
+        while (n > 0) {
+            size_t digit = n % 10;
+            n = (n-digit) / 10;
+            if (!write_in_string('0' + (char)digit, pos++, buff, max_size)) return 0;
+        }
+    }
+    if (!write_in_string(0, pos, buff, max_size)) return 0;
+    invert_string(buff, pos);
+    return pos;
+}
+
+inline size_t signed_to_string(ptrdiff_t n, char* buff, size_t max_size) { 
+    if (n >= 0) {
+        return unsigned_to_string((size_t)n, buff, max_size);
+    }
+    else {
+        size_t pos_size = unsigned_to_string((size_t)(-n), buff+1, max_size-1);
+        if (pos_size == 0) {
+            return 0;
         }
         buff[0] = '-';
-        return true;
+        return pos_size + 1;
     }
 }
+
+class StringView {
+public:
+    StringView(char const * str, size_t size) :
+        _str(str), _size(size) {}
+    
+    const char& operator[](size_t n) const {return this->_str[n];}
+
+    size_t size() const {return this->_size;}
+
+    bool isNull() const {return this->_str == nullptr;}
+
+private:
+    char const * _str;
+    size_t _size;
+};
+
+class StringParser {
+public:
+    StringParser(char const * str) : _str(str) {}
+
+    StringView getLine() {
+        while (this->_str[this->_pos] == '\n') { this->_pos++; }
+        if (this->_str[this->_pos] == '\0') return StringView(nullptr, 0);
+
+        size_t ini = this->_pos;
+        while (this->_str[this->_pos] != '\n' && this->_str[this->_pos] != '\0') {
+            this->_pos++;
+        }
+        size_t size = this->_pos - ini;
+        return StringView(this->_str + ini, size);
+    };
+
+private:
+    char const * _str;
+    size_t _pos = 0;
+};

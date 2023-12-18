@@ -27,32 +27,25 @@ isr_common_stub:
 	iret ; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
 
 irq_common_stub:
-    ; 1. Save CPU state
-	pusha ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-	mov ax, ds ; Lower 16-bits of eax = ds.
-	push eax ; save the data segment descriptor
-	mov ax, 0x10  ; kernel data segment descriptor
-	mov ds, ax
-	mov es, ax
-	mov fs, ax
-	mov gs, ax
-	
-    ; 2. Call C handler
-	call irq_handler
-	
-    ; 3. Restore state
-	pop ebx 
-	mov ds, ax
-	mov es, ax
-	mov fs, ax
-	mov gs, ax
-	popa
-	add esp, 8 ; Cleans up the pushed error code and pushed ISR number
-	sti
-	iret ; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
+    pusha 
+    mov ax, ds
+    push eax
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+    call irq_handler
+    pop ebx
+    mov ds, bx
+    mov es, bx
+    mov fs, bx
+    mov gs, bx
+    popa
+    add esp, 8
+    sti
+    iret 
 
-
-global idt_flush
 
 global call_interrupt
 
@@ -105,11 +98,6 @@ global irq12
 global irq13
 global irq14
 global irq15
-
-idt_flush:
-    mov eax, [esp+4]
-    lidt [eax]
-    ret
 
 call_interrupt:
     mov eax, [esp+4]
